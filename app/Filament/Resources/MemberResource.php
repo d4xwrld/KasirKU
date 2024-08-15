@@ -52,18 +52,18 @@ class MemberResource extends Resource
             ])
             ->actions([ //TO-DO: Add condition to show edit button only for admin
                 // auth()->user()->usertype === 'admin' ? Tables\Actions\EditAction::make() : null,
-                Tables\Actions\EditAction::make()
-            ])
+                // Tables\Actions\EditAction::make()
+            ]);
             // ->bulkActions([
             //     auth()->user()->usertype === 'admin' ? Tables\Actions\BulkActionGroup::make([
             //         Tables\Actions\DeleteBulkAction::make(),
             //     ]) : null,
             // ]);
-            ->bulkActions([ //TO-DO: Add condition to show Delete button only for admin
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+            // ->bulkActions([ //TO-DO: Add condition to show Delete button only for admin
+            //     Tables\Actions\BulkActionGroup::make([
+            //         Tables\Actions\DeleteBulkAction::make(),
+            //     ]),
+            // ]);
     }
 
     public static function getRelations(): array
