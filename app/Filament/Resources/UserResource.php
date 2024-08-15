@@ -24,7 +24,7 @@ class UserResource extends Resource
     {
         return auth()->user()->usertype === 'admin';
     }
-    // protected static ?string $navigationLabel = "Users";
+    protected static ?string $navigationLabel = "Karyawan";
     
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
 

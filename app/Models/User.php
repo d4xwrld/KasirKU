@@ -54,4 +54,9 @@ class User extends Authenticatable
             'is_admin' => 'string',
         ];
     }
+
+    public function member()
+    {
+        return $this->hasMany(Member::class);
+    }
 }

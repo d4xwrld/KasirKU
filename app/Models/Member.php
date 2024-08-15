@@ -20,4 +20,8 @@ class Member extends Model
             'phone' => 'string',
         ];
     }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

@@ -21,6 +21,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Filament\Resources\TransactionResource\Pages;
 use App\Models\Product;
+use Filament\Pages\Page;
+use Filament\Support\Facades\Filament;
+use Illuminate\Support\Facades\Auth;
+use Filament\Pages\Actions\Action as FilamentAction;
 
 class TransactionResource extends Resource
 {
@@ -29,8 +33,18 @@ class TransactionResource extends Resource
         return $form
         ->schema([
             Grid::make(['default' => 2])->schema([
-                TextInput::make('date')->label('Date'),
-                TextInput::make('total')->label('Total'),
+                // TextInput::make('date')->label('Date'),
+                // DatePicker::make('date')->label('Date')->default(now())->required()->disabled(),
+                TextInput::make('total')->label('Total')
+                    ->disabled()
+                    ->reactive()
+                    ->afterStateUpdated(function ($component, $state, $context) {
+                        $product_id = $component->getState('product_id');
+                        $quantity = $component->getState('quantity');
+                        
+                        $product = Product::find($product_id);
+                        $component->state($product->price * $quantity);
+                    }),
             ]),
             Grid::make(['default' => 2])->schema([
                 Select::make('product_id')
@@ -38,21 +52,27 @@ class TransactionResource extends Resource
                     ->options(fn () => Product::all()->pluck('name', 'id'))
                     ->multiple()
                     ->reactive(),
-                TextInput::make('quantity')
+                TextInput::make('quantity') /* ERROR HERE */
                     ->label('Quantity')
                     ->required()
                     ->numeric()
                     ->minValue(1)
-                    ->reactive(),
-                // Calculated price
-                TextInput::make('price')
-                    ->label('Price')
-                    ->disabled()
                     ->reactive()
                     ->afterStateUpdated(function ($component, $state, $context) {
-                        $product = Product::find($component->getState('product_id'));
-                        $component->state($state * $product->price);
+                        $product_id = $component->getState('product_id');
+                        
+                        $product = Product::find($product_id);
+                        $component->parent()->get('total')->state($product->price * $state);
                     }),
+                // Calculated price
+                // TextInput::make('price')
+                //     ->label('Price')
+                //     ->disabled()
+                //     ->reactive()
+                //     ->afterStateUpdated(function ($component, $state, $context) {
+                //         $product = Product::find($component->getState('product_id'));
+                //         $component->state($state * $product->price);
+                //     }),
             ]),
         ]);
     }
@@ -83,10 +103,13 @@ class TransactionResource extends Resource
         return 'heroicon-o-shopping-bag';
     }
 
-    public static function getNavigationGroup(): ?string
+    public static function getNavigationGroup(): string
     {
-        return 'Transactions';
+        if(auth()->user()->usertype === 'admin') {
+            return 'Reports';
+        } return null;
     }
+
     public static function getRelations(): array
     {
         return [
@@ -102,4 +125,14 @@ class TransactionResource extends Resource
             'edit' => Pages\EditTransaction::route('/{record}/edit'),
         ];
     }
+
+    public static function canCreate(): bool
+    {
+        return Auth::user()->usertype !== 'admin'; 
+    }
+
+    // public static function canViewAny(): bool
+    // {
+    //     return Auth::user()->usertype === 'admin';
+    // }
 }
