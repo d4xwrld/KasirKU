@@ -21,10 +21,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Filament\Resources\TransactionResource\Pages;
 use App\Models\Product;
+use App\Models\TransactionDetail;
 use Filament\Pages\Page;
 use Filament\Support\Facades\Filament;
 use Illuminate\Support\Facades\Auth;
-use Filament\Pages\Actions\Action as FilamentAction;
 
 class TransactionResource extends Resource
 {
@@ -38,12 +38,14 @@ class TransactionResource extends Resource
                 TextInput::make('total')->label('Total')
                     ->disabled()
                     ->reactive()
-                    ->afterStateUpdated(function ($component, $state, $context) {
-                        $product_id = $component->getState('product_id');
-                        $quantity = $component->getState('quantity');
+                    ->afterStateUpdated(function ($component) {
+                        $product_id = $component->getContainer()->getComponent('product_id')->getState();
+                        $quantity = $component->getContainer()->getComponent('quantity')->getState();
                         
                         $product = Product::find($product_id);
-                        $component->state($product->price * $quantity);
+                        if ($product) {
+                            $component->state($product->price * $quantity);
+                        }
                     }),
             ]),
             Grid::make(['default' => 2])->schema([
@@ -52,17 +54,17 @@ class TransactionResource extends Resource
                     ->options(fn () => Product::all()->pluck('name', 'id'))
                     ->multiple()
                     ->reactive(),
-                TextInput::make('quantity') /* ERROR HERE */
+                TextInput::make('quantity')
                     ->label('Quantity')
                     ->required()
                     ->numeric()
                     ->minValue(1)
                     ->reactive()
-                    ->afterStateUpdated(function ($component, $state, $context) {
+                    ->afterStateUpdated(function ($component, $state) {
                         $product_id = $component->getState('product_id');
                         
                         $product = Product::find($product_id);
-                        $component->parent()->get('total')->state($product->price * $state);
+                        $component->getContainer()->getComponent('total')->state($product->price * $state);
                     }),
                 // Calculated price
                 // TextInput::make('price')
@@ -81,12 +83,14 @@ class TransactionResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('date')->label('Date'),
-                TextColumn::make('total')->label('Total'),
+                // TextColumn::make('id'),
+                // TextColumn::make('created_at')->label('Date'),
+                // TextColumn::make('member_id')->label('Member'),
+                // TextColumn::make('total')->label('Total'),
             ])
             ->actions([
                 EditAction::make(),
-                DeleteAction::make(),
+                // DeleteAction::make(),
             ])
             ->bulkActions([
                 // Bulk actions can be added here
@@ -103,12 +107,12 @@ class TransactionResource extends Resource
         return 'heroicon-o-shopping-bag';
     }
 
-    public static function getNavigationGroup(): string
-    {
-        if(auth()->user()->usertype === 'admin') {
-            return 'Reports';
-        } return null;
-    }
+    // public static function getNavigationGroup(): string
+    // {
+    //     if(Auth::user()->usertype === 'admin') {
+    //         return 'Reports';
+    //     } return 'Transactions';
+    // }
 
     public static function getRelations(): array
     {
@@ -120,15 +124,29 @@ class TransactionResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListTransactions::route('/'),
-            'create' => Pages\CreateTransaction::route('/create'),
-            'edit' => Pages\EditTransaction::route('/{record}/edit'),
+                'index' => Pages\CreateTransaction::route('/'),
+                // 'create' => Pages\CreateTransaction::route('/create'),
+                // 'edit' => Pages\EditTransaction::route('/{record}/edit'),
         ];
     }
 
-    public static function canCreate(): bool
+    // public static function canCreate(): bool
+    // {
+    //     return Auth::user()->usertype !== 'admin'; 
+    // }
+
+    public static function canAccess(): bool
     {
-        return Auth::user()->usertype !== 'admin'; 
+        if(Auth::user()->usertype !== 'admin') {
+            return true;
+        } return false;
+        // return static::canViewAny();
+    }
+
+
+    public static function canView(Model $record): bool
+    {
+        return Auth::user()->usertype === 'admin'; 
     }
 
     // public static function canViewAny(): bool

@@ -14,13 +14,14 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Auth;
 
 class ReportUsersResource extends Resource
 {
     protected static ?string $model = User::class;
     public static function canViewAny(): bool
     {
-        return auth()->user()->usertype === 'admin';
+        return Auth::user()->usertype === 'admin';
     }
 
     protected static ?string $navigationLabel = "Karyawan";
@@ -42,10 +43,14 @@ class ReportUsersResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name'),
+                TextColumn::make('name')
+                ->sortable()
+                ->searchable(),
                 TextColumn::make('email'),
                 TextColumn::make('usertype')
-                            ->label('Role'),
+                ->label('Role')
+                ->sortable()
+                ->searchable(),
             ])
             ->filters([
                 //

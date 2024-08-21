@@ -14,12 +14,13 @@ use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 
 class ProductResource extends Resource
 {
     public static function canViewAny(): bool
     {
-        return auth()->user()->usertype === 'admin';
+        return Auth::user()->usertype === 'admin';
     }
     protected static ?string $model = Product::class;
 
@@ -32,8 +33,10 @@ class ProductResource extends Resource
                 TextInput::make('name')
                     ->label('Name')
                     ->required(),
-                TextInput::make('price'),
-                TextInput::make('stock'),
+                TextInput::make('price')
+                ->required(),
+                TextInput::make('stock')
+                ->required(),
 
             ]);
     }

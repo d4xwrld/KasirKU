@@ -13,6 +13,7 @@ use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 
 class ReportResource extends Resource
 {
@@ -21,7 +22,7 @@ class ReportResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()->usertype === 'admin';
+        return Auth::user()->usertype === 'admin';
     }
     protected static ?string $navigationGroup = "Reports";
     protected static ?string $navigationIcon = 'heroicon-o-bookmark-square';
@@ -38,7 +39,9 @@ class ReportResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name'),
+                TextColumn::make('name')
+                ->searchable()
+                ->sortable(),
                 TextColumn::make('price'),
                 TextColumn::make('stock'),
             ])

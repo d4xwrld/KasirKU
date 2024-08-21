@@ -45,7 +45,7 @@ class MemberResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name'),
-                TextColumn::make('phone'),
+                TextColumn::make('phone')
             ])
             ->filters([
                 //

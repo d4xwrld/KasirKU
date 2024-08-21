@@ -7,6 +7,7 @@ use Filament\Support\Facades\FilamentIcon;
 use Filament\Widgets\Widget;
 use Filament\Widgets\WidgetConfiguration;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Facades\Auth;
 
 class Dashboard extends Page
 {
@@ -23,7 +24,7 @@ class Dashboard extends Page
 
     public function getSubheading(): ?string
     {
-        if (auth()->user()->usertype === 'admin') {
+        if(Auth::user()->usertype === 'admin') {
             return 'Welcome!';
         }   return null;
     }
@@ -52,7 +53,7 @@ class Dashboard extends Page
      */
     public function getWidgets(): array
     {
-        if(auth()->user()->usertype === 'admin') {
+        if(Auth::user()->usertype === 'admin') {
             return Filament::getWidgets();
         } return [];
     }

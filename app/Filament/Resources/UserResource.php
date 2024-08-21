@@ -15,6 +15,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 
 class UserResource extends Resource
 {
@@ -22,7 +23,7 @@ class UserResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()->usertype === 'admin';
+        return Auth::user()->usertype === 'admin';
     }
     protected static ?string $navigationLabel = "Karyawan";
     
@@ -38,7 +39,8 @@ class UserResource extends Resource
                 TextInput::make('email')
                     ->label('Email')
                     ->required(),
-                Select::make('Role')
+                Select::make('usertype')
+                        ->label('Role')
                         ->required()
                         ->options([
                             'admin' => 'Admin',
@@ -54,10 +56,15 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name'),
-                TextColumn::make('email'),
+                TextColumn::make('name')
+                ->sortable()
+                ->searchable(),
+                TextColumn::make('email')
+                ->searchable(),
                 TextColumn::make('usertype')
-                            ->label('Role'),
+                ->label('Role')
+                ->sortable()
+                ->searchable(),
             ])
             ->filters([
                 //

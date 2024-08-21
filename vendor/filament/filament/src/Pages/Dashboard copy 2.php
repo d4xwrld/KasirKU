@@ -23,7 +23,7 @@ class Dashboard extends Page
 
     public function getSubheading(): ?string
     {
-        if (auth()->user()->usertype === 'admin') {
+        if(Auth::user()->usertype === 'admin') {
             return 'Welcome!';
         }   return null;
     }
