@@ -25,77 +25,99 @@ use App\Models\TransactionDetail;
 use Filament\Pages\Page;
 use Filament\Support\Facades\Filament;
 use Illuminate\Support\Facades\Auth;
-
+use Filament\Forms\Components\Repeater;
 class TransactionResource extends Resource
-{
-    public static function form(Form $form): Form
     {
-        return $form
-        ->schema([
-            Grid::make(['default' => 2])->schema([
-                // TextInput::make('date')->label('Date'),
-                // DatePicker::make('date')->label('Date')->default(now())->required()->disabled(),
-                TextInput::make('total')->label('Total')
-                    ->disabled()
-                    ->reactive()
-                    ->afterStateUpdated(function ($component) {
-                        $product_id = $component->getContainer()->getComponent('product_id')->getState();
-                        $quantity = $component->getContainer()->getComponent('quantity')->getState();
-                        
-                        $product = Product::find($product_id);
-                        if ($product) {
-                            $component->state($product->price * $quantity);
-                        }
-                    }),
-            ]),
-            Grid::make(['default' => 2])->schema([
-                Select::make('product_id')
-                    ->label('Product')
-                    ->options(fn () => Product::all()->pluck('name', 'id'))
-                    ->multiple()
-                    ->reactive(),
-                TextInput::make('quantity')
-                    ->label('Quantity')
-                    ->required()
-                    ->numeric()
-                    ->minValue(1)
-                    ->reactive()
-                    ->afterStateUpdated(function ($component, $state) {
-                        $product_id = $component->getState('product_id');
-                        
-                        $product = Product::find($product_id);
-                        $component->getContainer()->getComponent('total')->state($product->price * $state);
-                    }),
-                // Calculated price
-                // TextInput::make('price')
-                //     ->label('Price')
-                //     ->disabled()
-                //     ->reactive()
-                //     ->afterStateUpdated(function ($component, $state, $context) {
-                //         $product = Product::find($component->getState('product_id'));
-                //         $component->state($state * $product->price);
-                //     }),
-            ]),
-        ]);
-    }
-
-    public static function table(Table $table): Table
-    {
-        return $table
-            ->columns([
-                // TextColumn::make('id'),
-                // TextColumn::make('created_at')->label('Date'),
-                // TextColumn::make('member_id')->label('Member'),
-                // TextColumn::make('total')->label('Total'),
-            ])
-            ->actions([
-                EditAction::make(),
-                // DeleteAction::make(),
-            ])
-            ->bulkActions([
-                // Bulk actions can be added here
-            ]);
-    }
+        public static function form(Form $form): Form
+        {
+            return $form
+                ->schema([
+                    Repeater::make('transaction_detail')
+                        ->label('Transaction Details')
+                        ->relationship('transactionDetails')
+                        ->schema([
+                            Select::make('product_id')
+                                ->label('Product')
+                                ->options(Product::all()->pluck('name', 'id'))
+                                ->reactive()
+                                ->searchable()
+                                ->required()
+                                ->afterStateUpdated(function ($state, $get, $set) {
+                                    $product = Product::find($state);
+                                    if ($product) {
+                                        $set('price', $product->price);
+                                        $quantity = $get('qty');
+                                        if ($quantity) {
+                                            $set('subtotal', $product->price * $quantity);
+                                        }
+                                    }
+                                }),
+                            TextInput::make('qty')
+                                ->label('Quantity')
+                                ->required()
+                                ->numeric()
+                                ->minValue(1)
+                                ->reactive()
+                                ->afterStateUpdated(function ($state, $get, $set) {
+                                    $price = $get('price');
+                                    if ($price) {
+                                        $set('subtotal', $price * $state);
+                                    }
+                                    // Update total after quantity change
+                                    $transactionDetails = $get('transaction_detail');
+                                    $total = collect($transactionDetails)->sum('subtotal');
+                                    $set('total', $total);
+                                }),
+                            TextInput::make('price')
+                                ->label('Price')
+                                ->disabled()
+                                ->reactive(),
+                            TextInput::make('subtotal')
+                                ->label('Subtotal')
+                                ->disabled()
+                                ->reactive()
+                                ->afterStateUpdated(function ($state, $get, $set) {
+                                    // Update total after subtotal change
+                                    $transactionDetails = $get('transaction_detail');
+                                    $total = collect($transactionDetails)->sum('subtotal');
+                                    $set('total', $total);
+                                }),
+                        ])
+                        ->createItemButtonLabel('Add Product')
+                        ->afterStateUpdated(function ($state, $get, $set) {
+                            $transactionDetails = $get('transaction_detail');
+                            $total = collect($transactionDetails)->sum('subtotal');
+                            $set('total', $total);
+                        }),
+                    TextInput::make('total')
+                        ->label('Total')
+                        ->disabled()
+                        ->reactive()
+                        ->afterStateHydrated(function ($state, $get, $set) {
+                            $transactionDetails = $get('transaction_detail');
+                            $total = collect($transactionDetails)->sum('subtotal');
+                            $set('total', $total);
+                        }),
+                ]);
+        }
+    
+        public static function table(Table $table): Table
+        {
+            return $table
+                ->columns([
+                    // TextColumn::make('id'),
+                    // TextColumn::make('created_at')->label('Date'),
+                    // TextColumn::make('member_id')->label('Member'),
+                    // TextColumn::make('total')->label('Total'),
+                ])
+                ->actions([
+                    EditAction::make(),
+                    // DeleteAction::make(),
+                ])
+                ->bulkActions([
+                    // Bulk actions can be added here
+                ]);
+        }
 
     public static function getModel(): string
     {
@@ -124,9 +146,9 @@ class TransactionResource extends Resource
     public static function getPages(): array
     {
         return [
-                'index' => Pages\CreateTransaction::route('/'),
-                // 'create' => Pages\CreateTransaction::route('/create'),
-                // 'edit' => Pages\EditTransaction::route('/{record}/edit'),
+            'index' => Pages\CreateTransaction::route('/'),
+            // 'create' => Pages\CreateTransaction::route('/create'),
+            // 'edit' => Pages\EditTransaction::route('/{record}/edit'),
         ];
     }
 
@@ -142,7 +164,6 @@ class TransactionResource extends Resource
         } return false;
         // return static::canViewAny();
     }
-
 
     public static function canView(Model $record): bool
     {
