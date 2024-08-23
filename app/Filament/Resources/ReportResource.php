@@ -5,15 +5,19 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ReportResource\Pages;
 use App\Filament\Resources\ReportResource\RelationManagers;
 use App\Models\Product;
+use Filament\Actions\ExportAction;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\ExportAction as ActionsExportAction;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
+use App\FIlament\Exports\ProductExporter;
+use Faker\Provider\ar_EG\Text;
 
 class ReportResource extends Resource
 {
@@ -44,6 +48,10 @@ class ReportResource extends Resource
                 ->sortable(),
                 TextColumn::make('price'),
                 TextColumn::make('stock'),
+                TextColumn::make('created_at')
+                ->label('Ditambahkan Pada'),
+                TextColumn::make('updated_at')
+                ->label('Diperbarui Pada'),
             ])
             ->filters([
                 //
@@ -51,6 +59,9 @@ class ReportResource extends Resource
             // ->actions([
             //     // Tables\Actions\EditAction::make(),
             // ])
+            ->headerActions([
+                \Filament\Tables\Actions\ExportAction::make()->exporter(ProductExporter::class),
+            ])
             ->bulkActions([
                 // Tables\Actions\BulkActionGroup::make([
                 //     Tables\Actions\DeleteBulkAction::make(),

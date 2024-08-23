@@ -51,6 +51,10 @@ class ReportUsersResource extends Resource
                 ->label('Role')
                 ->sortable()
                 ->searchable(),
+                TextColumn::make('created_at')
+                ->label('Ditambahkan Pada'),
+                // TextColumn::make('updated_at')
+                // ->label('Diperbarui Pada')
             ])
             ->filters([
                 //
@@ -58,6 +62,9 @@ class ReportUsersResource extends Resource
             // ->actions([
             //     Tables\Actions\EditAction::make(),
             // ])
+            ->headerActions([
+                Tables\Actions\ExportAction::make()->exporter(\App\Filament\Exports\UserExporter::class),
+            ])
             ->bulkActions([
                 // Tables\Actions\BulkActionGroup::make([
                 //     Tables\Actions\DeleteBulkAction::make(),
