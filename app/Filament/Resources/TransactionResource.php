@@ -32,13 +32,26 @@ class TransactionResource extends Resource
     
     public static function form(Form $form): Form
     {
+        
+        
         function updateTotal($get, $set) {
-            $subtotal = $get('subtotal');
-            $discount = $get('discount') ?? 0;
-            $total = $subtotal - $discount;
+            $transactionDetails = $get('transaction_detail');
+            $total = 0;
+        
+            if ($transactionDetails) {
+                foreach ($transactionDetails as $detail) {
+                    $total += $detail['subtotal'];
+                }
+            }
+        
+            $discount = $get('discount');
+            if ($discount) {
+                $total -= $total * ($discount / 100);
+            }
+        
             $set('total', $total);
         }
-        
+
         function applyDiscount($get, $set) {
             $memberPhone = $get('member_phone');
             $discount = 0;
@@ -74,8 +87,8 @@ class TransactionResource extends Resource
                                     $quantity = $get('qty');
                                     if ($quantity) {
                                         $set('subtotal', $product->price * $quantity);
-                                        updateTotal($get, $set);
                                     }
+                                    updateTotal($get, $set);
                                 }
                             }),
                             TextInput::make('qty')
@@ -88,8 +101,8 @@ class TransactionResource extends Resource
                                 $price = $get('price');
                                 if ($price) {
                                     $set('subtotal', $price * $state);
-                                    updateTotal($get, $set);
                                 }
+                                updateTotal($get, $set);
                             }),
                         TextInput::make('price')
                             ->label('Price')

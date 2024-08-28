@@ -459,11 +459,11 @@ return [
 
         'no_search_results_message' => 'No options match your search.',
 
-        'placeholder' => 'Select an option',
+        'placeholder' => 'Pilih Opsi',
 
         'searching_message' => 'Searching...',
 
-        'search_prompt' => 'Start typing to search...',
+        'search_prompt' => '...',
 
     ],
 
