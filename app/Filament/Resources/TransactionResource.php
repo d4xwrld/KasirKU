@@ -26,80 +26,107 @@ use Filament\Pages\Page;
 use Filament\Support\Facades\Filament;
 use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Components\Repeater;
+use App\Models\Member;
 class TransactionResource extends Resource
     {
-        public static function form(Form $form): Form
-        {
-            return $form
-                ->schema([
-                    Repeater::make('transaction_detail')
-                        ->label('Transaction Details')
-                        ->relationship('transactionDetails')
-                        ->schema([
-                            Select::make('product_id')
-                                ->label('Product')
-                                ->options(Product::all()->pluck('name', 'id'))
-                                ->reactive()
-                                ->searchable()
-                                ->required()
-                                ->afterStateUpdated(function ($state, $get, $set) {
-                                    $product = Product::find($state);
-                                    if ($product) {
-                                        $set('price', $product->price);
-                                        $quantity = $get('qty');
-                                        if ($quantity) {
-                                            $set('subtotal', $product->price * $quantity);
-                                        }
-                                    }
-                                }),
-                            TextInput::make('qty')
-                                ->label('Quantity')
-                                ->required()
-                                ->numeric()
-                                ->minValue(1)
-                                ->reactive()
-                                ->afterStateUpdated(function ($state, $get, $set) {
-                                    $price = $get('price');
-                                    if ($price) {
-                                        $set('subtotal', $price * $state);
-                                    }
-                                    // Update total after quantity change
-                                    $transactionDetails = $get('transaction_detail');
-                                    $total = collect($transactionDetails)->sum('subtotal');
-                                    $set('total', $total);
-                                }),
-                            TextInput::make('price')
-                                ->label('Price')
-                                ->disabled()
-                                ->reactive(),
-                            TextInput::make('subtotal')
-                                ->label('Subtotal')
-                                ->disabled()
-                                ->reactive()
-                                ->afterStateUpdated(function ($state, $get, $set) {
-                                    // Update total after subtotal change
-                                    $transactionDetails = $get('transaction_detail');
-                                    $total = collect($transactionDetails)->sum('subtotal');
-                                    $set('total', $total);
-                                }),
-                        ])
-                        ->createItemButtonLabel('Add Product')
-                        ->afterStateUpdated(function ($state, $get, $set) {
-                            $transactionDetails = $get('transaction_detail');
-                            $total = collect($transactionDetails)->sum('subtotal');
-                            $set('total', $total);
-                        }),
-                    TextInput::make('total')
-                        ->label('Total')
-                        ->disabled()
-                        ->reactive()
-                        ->afterStateHydrated(function ($state, $get, $set) {
-                            $transactionDetails = $get('transaction_detail');
-                            $total = collect($transactionDetails)->sum('subtotal');
-                            $set('total', $total);
-                        }),
-                ]);
+    
+    public static function form(Form $form): Form
+    {
+        function updateTotal($get, $set) {
+            $subtotal = $get('subtotal');
+            $discount = $get('discount') ?? 0;
+            $total = $subtotal - $discount;
+            $set('total', $total);
         }
+        
+        function applyDiscount($get, $set) {
+            $memberPhone = $get('member_phone');
+            $discount = 0;
+        
+            if ($memberPhone) {
+                // Apply discount logic based on member phone
+                $member = Member::where('phone', $memberPhone)->first();
+                if ($member) {
+                    $discount = $member->discount; // Assuming discount is a field in the Member model
+                }
+            }
+        
+            $set('discount', $discount);
+            updateTotal($get, $set);
+        }
+        
+        return $form
+            ->schema([
+                Repeater::make('transaction_detail')
+                    ->label('Transaksi')
+                    ->relationship('transactionDetails')
+                    ->schema([
+                        Select::make('product_id')
+                            ->label('Product')
+                            ->options(Product::all()->pluck('name', 'id'))
+                            ->reactive()
+                            ->searchable()
+                            ->required()
+                            ->afterStateUpdated(function ($state, $get, $set) {
+                                $product = Product::find($state);
+                                if ($product) {
+                                    $set('price', $product->price);
+                                    $quantity = $get('qty');
+                                    if ($quantity) {
+                                        $set('subtotal', $product->price * $quantity);
+                                        updateTotal($get, $set);
+                                    }
+                                }
+                            }),
+                            TextInput::make('qty')
+                            ->label('Quantity')
+                            ->required()
+                            ->numeric()
+                            ->minValue(1)
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, $get, $set) {
+                                $price = $get('price');
+                                if ($price) {
+                                    $set('subtotal', $price * $state);
+                                    updateTotal($get, $set);
+                                }
+                            }),
+                        TextInput::make('price')
+                            ->label('Price')
+                            ->disabled()
+                            ->reactive(),
+                        TextInput::make('subtotal')
+                            ->label('Subtotal')
+                            ->disabled()
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, $get, $set) {
+                                updateTotal($get, $set);
+                            }),
+                    ])
+                    ->createItemButtonLabel('Add Product')
+                    ->afterStateUpdated(function ($state, $get, $set) {
+                        updateTotal($get, $set);
+                    }),
+                    Select::make('member_phone')
+                    ->label('Member')
+                    ->options(Member::all()->pluck('phone', 'phone')) // Use phone as both key and value
+                    ->reactive()
+                    ->searchable()
+                    ->afterStateUpdated(function ($state, $get, $set) {
+                        if ($state) {
+                            applyDiscount($get, $set);
+                        }
+                        updateTotal($get, $set);
+                    }),
+                    TextInput::make('total')
+                    ->label('Total')
+                    ->disabled()
+                    ->reactive()
+                    ->afterStateHydrated(function ($state, $get, $set) {
+                        updateTotal($get, $set);
+                    }),
+            ]);
+    }
     
         public static function table(Table $table): Table
         {

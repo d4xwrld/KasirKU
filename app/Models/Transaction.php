@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\TransactionDetail;
 use Illuminate\Database\Eloquent\Model;
 
 class Transaction extends Model
 {
-    protected $fillable = ['member_id', 'total'];
+    protected $fillable = ['member_phone', 'total'];
 
     public function transactionDetails()
     {
