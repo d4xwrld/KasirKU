@@ -60,6 +60,11 @@ class UserResource extends Resource
                 ->sortable()
                 ->searchable(),
                 TextColumn::make('email')
+                ->searchable()
+                ->copyable()
+                ->copyMessage('Email address copied')
+                ->copyMessageDuration(1500)
+                ->sortable()
                 ->searchable(),
                 TextColumn::make('usertype')
                 ->label('Role')

@@ -39,8 +39,10 @@ class ReportTransactionResource extends Resource
                 TextColumn::make('created_at')->label('Date')
                 ->searchable()
                 ->sortable(),
-                TextColumn::make('member_id')->label('Member')
-                ->searchable(),
+                TextColumn::make('member_phone')->label('Member')
+                ->searchable()
+                ->sortable()
+                ->placeholder('None'),
                 TextColumn::make('total'),
             ])
             ->filters([

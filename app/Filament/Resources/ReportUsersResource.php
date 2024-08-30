@@ -46,7 +46,10 @@ class ReportUsersResource extends Resource
                 TextColumn::make('name')
                 ->sortable()
                 ->searchable(),
-                TextColumn::make('email'),
+                TextColumn::make('email')
+                ->copyable()
+                ->copyMessage('Email address copied')
+                ->copyMessageDuration(1500),
                 TextColumn::make('usertype')
                 ->label('Role')
                 ->sortable()

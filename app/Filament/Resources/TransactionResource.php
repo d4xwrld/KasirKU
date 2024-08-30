@@ -57,10 +57,9 @@ class TransactionResource extends Resource
             $discount = 0;
         
             if ($memberPhone) {
-                // Apply discount logic based on member phone
                 $member = Member::where('phone', $memberPhone)->first();
                 if ($member) {
-                    $discount = $member->discount; // Assuming discount is a field in the Member model
+                    $discount = $member->discount;
                 }
             }
         
